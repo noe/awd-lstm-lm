@@ -8,8 +8,9 @@
 import argparse
 
 import torch
+import torch.nn.functional as F
 from torch.autograd import Variable
-
+from sampling import top_k_top_p_filtering
 import data
 
 parser = argparse.ArgumentParser(description='PyTorch PTB Language Model')
@@ -33,6 +34,7 @@ parser.add_argument('--temperature', type=float, default=1.0,
                     help='temperature - higher will increase diversity')
 parser.add_argument('--log-interval', type=int, default=100,
                     help='reporting interval')
+parser.add_argument('--nucleus', action='store_true')
 args = parser.parse_args()
 
 # Set the random seed manually for reproducibility.
@@ -72,8 +74,15 @@ if args.cuda:
 with open(args.outf, 'w') as outf:
     for i in range(args.words):
         output, hidden = model(input, hidden)
-        word_weights = model.decoder(output).squeeze().data.div(args.temperature).exp().cpu()
-        word_idx = torch.multinomial(word_weights, 1)[0]
+        logits = model.decoder(output).squeeze().data.div(args.temperature)
+        if args.nucleus:
+            filtered_logits = top_k_top_p_filtering(logits, top_p=.9)
+            probabilities = F.softmax(filtered_logits, dim=-1)
+            word_idx = torch.multinomial(probabilities, 1).squeeze().cpu()
+        else:
+            word_weights = logits.exp().cpu()
+            word_idx = torch.multinomial(word_weights, 1)[0]
+
         input.data.fill_(word_idx)
         word = corpus.dictionary.idx2word[word_idx]
 
