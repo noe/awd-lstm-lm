@@ -67,11 +67,12 @@ else:
 corpus = data.Corpus(args.data)
 ntokens = len(corpus.dictionary)
 hidden = model.init_hidden(1)
-input = Variable(torch.rand(1, 1).mul(ntokens).long(), volatile=True)
-if args.cuda:
+with torch.no_grad():
+  input = Variable(torch.rand(1, 1).mul(ntokens).long())
+  if args.cuda:
     input.data = input.data.cuda()
 
-with open(args.outf, 'w') as outf:
+  with open(args.outf, 'w') as outf:
     for i in range(args.words):
         output, hidden = model(input, hidden)
         logits = model.decoder(output).squeeze().data.div(args.temperature)
