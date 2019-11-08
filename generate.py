@@ -6,7 +6,7 @@
 ###############################################################################
 
 import argparse
-
+import sys
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
@@ -78,8 +78,8 @@ with torch.no_grad():
         logits = model.decoder(output).squeeze().data.div(args.temperature)
         if args.nucleus:
             filtered_logits = top_k_top_p_filtering(logits, top_p=.9)
-            probabilities = F.softmax(filtered_logits, dim=-1)
-            word_idx = torch.multinomial(probabilities, 1).squeeze().cpu()
+            probabilities = F.softmax(filtered_logits, dim=-1).cpu()
+            word_idx = torch.multinomial(probabilities, 1)[0]
         else:
             word_weights = logits.exp().cpu()
             word_idx = torch.multinomial(word_weights, 1)[0]
@@ -90,4 +90,4 @@ with torch.no_grad():
         outf.write(word + ('\n' if i % 20 == 19 else ' '))
 
         if i % args.log_interval == 0:
-            print('| Generated {}/{} words'.format(i, args.words))
+            print('| Generated {}/{} words'.format(i, args.words), file=sys.stderr)
