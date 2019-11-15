@@ -55,8 +55,8 @@ ntokens = len(corpus.dictionary)
 def score(sentence):
     with torch.no_grad():
         tokens =["<eos>"] + sentence.split(' ')  # <eos> here serves as <sos>
-        num_tokens = len(tokens) - 1
-        idxs = [corpus.dictionary.word2idx[t] for t in tokens]
+        idxs = [corpus.dictionary.word2idx[t] for t in tokens if t in corpus.dictionary.word2idx]
+        num_tokens = len(idxs) - 1
         idxs = torch.LongTensor(idxs).unsqueeze(1)
         hidden = model.init_hidden(1)
         output, hidden = model(idxs, hidden)
