@@ -63,7 +63,8 @@ def score(sentence):
         logits = model.decoder(output)
         logprobs = F.log_softmax(logits, dim=1)
         total_logprob = sum([logprobs[i][idxs[i+1]] for i in range(num_tokens)])
-        return total_logprob.cpu().item(), num_tokens
+        total_logprob = total_logprob if isinstance(total_logprob, (int, float)) else total_logprob.cpu().item()
+        return total_logprob, num_tokens
 
 
 input_lines = (io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
