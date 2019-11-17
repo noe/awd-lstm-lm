@@ -29,6 +29,7 @@ parser.add_argument('--cuda', action='store_true',
                     help='use CUDA')
 parser.add_argument("--input", required=False, type=str)
 parser.add_argument('--ppl', action='store_true')
+parser.add_argument('--also-ppl', type=str, required=False)
 args = parser.parse_args()
 
 with open(args.checkpoint, 'rb') as f:
@@ -81,8 +82,11 @@ for line in input_lines:
     if not args.ppl:
         print(logprob)
 
-if args.ppl:
-    log2_prob = accumulated_logprob / math.log(2)
-    ppl = math.pow(2., - log2_prob/total_num_tokens)
-    print(ppl)
+log2_prob = accumulated_logprob / math.log(2)
+ppl = math.pow(2., - log2_prob/total_num_tokens)
 
+if args.ppl:
+    print(ppl)
+elif args.also_ppl:
+    with open(args.also_ppl, 'w', encoding='utf-8') as f:
+        print(ppl, file=f)
